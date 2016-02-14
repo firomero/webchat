@@ -1,0 +1,30 @@
+<html>
+	<head>
+		
+	</head>
+	<body>
+    <div data-ng-app="chatClient" data-ng-controller="chatController">
+        <div data-ng-hide="chatConfig.connected">
+            <label for="email">Email</label>
+            <input type="text" data-ng-model="chatConfig.email" id="email"/>
+            <label for="username">Username</label>
+            <input type="text" data-ng-model="chatConfig.username" id="username"/>
+            <button data-ng-click="Connect()">Connect</button>
+        </div>
+        <br/>
+        <hr>
+        <div data-ng-show="chatConfig.connected">
+            <input data-ng-model="single" type="text"/>
+            <ul>
+                <li data-ng-repeat="text in chatMessage.content">{{text}}</li>
+            </ul>
+            <span>Last Sended: {{chatMessage.time}}</span>
+            <button data-ng-click="Send()">Send</button>
+        </div>
+    </div>
+		<script type="text/javascript" src="js/angular.min.js"></script>
+        <script type="text/javascript" src="js/client/chatClient.js"> </script>
+        <script type="text/javascript" src="js/client/controller/controller.js"> </script>
+        <script type="text/javascript" src="js/client/factory/factory.js"> </script>
+	</body>
+</html>
