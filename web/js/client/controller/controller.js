@@ -20,29 +20,38 @@ $scope.chatConfig = chatConfig;
 $scope.chatMessage = chatMessage;
 $scope.serverMessage = serverMessage;
 $scope.single = '';
-$scope.roomTitle = 'Login';
+$scope.welcome = '';
+$scope.soporte='ws';
 
-var   connection = new WebSocket('ws://localhost:1919');
+var   connection = new WebSocket('ws://192.168.1.22:1919');
     connection.onmessage = function(e) {
 
-        $scope.$apply($scope.chatMessage.content.push(e.data));
-        console.warn(e.data);
+        var msgObject = JSON.parse(e.data);
+        $scope.$apply($scope.chatMessage.content.push(msgObject.message));
+       $scope.$apply($scope.welcome = msgObject.from);
+        console.debug(msgObject);
     };
+
 $scope.Connect=function(){
 
     connection.onopen = function(e){
-        alert('Connected');
         console.info('connected');
     } ;
 
 
     $scope.chatConfig.connected = true;
-    $scope.roomTitle = 'Chat';
+
 };
 
 $scope.Send = function(){
 
-    connection.send($scope.single);
+    connection.send(JSON.stringify({
+        username:$scope.chatConfig.username,
+        email:$scope.chatConfig.email,
+        from:$scope.chatConfig.email,
+        to:'all',
+        message:$scope.single
+    }));
     $scope.chatMessage.content.push($scope.single);
     $scope.single = '';
 };
@@ -50,7 +59,7 @@ $scope.Send = function(){
 $scope.Cancel = function(){
     connection.close();
     $scope.chatConfig.connected = false;
-    $scope.roomTitle = 'Login';
+
 }
 
 
