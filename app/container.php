@@ -23,13 +23,18 @@ $sc->register('listener.router', 'Symfony\Component\HttpKernel\EventListener\Rou
 $sc->register('listener.response', 'Symfony\Component\HttpKernel\EventListener\ResponseListener')
     ->setArguments(array('UTF-8'))
 ;
+$sc->register('listener.controller', 'MyApp\Subscribers\ContainerListener')
+    ->setArguments(array($sc));
+;
+
+$sc->register('connection', 'Doctrine\MongoDB\Connection')
+
+;
 
 $sc->register('dispatcher', 'Symfony\Component\EventDispatcher\EventDispatcher')
     ->addMethodCall('addSubscriber', array(new Reference('listener.router')))
     ->addMethodCall('addSubscriber', array(new Reference('listener.response')))
-
-;
-$sc->register('connection', 'Doctrine\MongoDB\Connection')
+    ->addMethodCall('addSubscriber', array(new Reference('listener.controller')))
 
 ;
 
@@ -44,5 +49,7 @@ $sc->register('configuration', 'Doctrine\ODM\MongoDB\Configuration')
 $sc->register('core', 'MyApp\Core')
     ->setArguments(array(new Reference('dispatcher'), new Reference('resolver')))
 ;
+
+
 
 return $sc;

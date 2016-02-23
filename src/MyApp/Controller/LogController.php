@@ -10,7 +10,7 @@ namespace MyApp\Controller;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-class LogController {
+class LogController extends MainController{
     public function indexAction(Request $request){
         return new JsonResponse(array('text'));
     }

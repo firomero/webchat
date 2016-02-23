@@ -10,6 +10,10 @@ chatClient.factory('chatConfig',chatConfig);
 chatClient.factory('chatMessage',chatMessage);
 chatClient.factory('serverMessage',serverMessage);
 
+
+/*
+Default chat configuration
+ */
 function chatConfig(){
     return {
       host:'localhost',
@@ -17,11 +21,15 @@ function chatConfig(){
       connected:false,
       username:'Jon',
       email:'doe@jon.com',
-      resource:-1
+      resource:-1,
+      id:-1
 
     };
 }
 
+/*
+default text container
+ */
 function chatMessage(){
     return {
         content:[],
@@ -29,10 +37,19 @@ function chatMessage(){
     }
 }
 
+/*
+intercomunication object
+ */
 function serverMessage(){
     return{
-        error:'',
-        info:'',
-        warn:''
+        event: 'onCreate',
+        from:'',
+        email:'',
+        id: '',
+        connection: -1,
+        to: -1,
+        toConnection: -1,
+        message:'',
+        options:[]
     }
 }

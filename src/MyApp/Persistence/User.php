@@ -70,12 +70,17 @@ class User implements Model{
     /** @ODM\Field(type="string") */
     protected $email;
 
+    /**
+     * Returns normalized object
+     * @return array
+     */
     public function toArray()
     {
         return array(
             'username'=>$this->username,
             'email'=>$this->email,
-            'connection'=>$this->connection->resourceId,
+            'connection'=>$this->connection,
+            'id'=>$this->id
         );
     }
 
@@ -83,6 +88,9 @@ class User implements Model{
         return 'chatUser';
     }
 
+    /**
+     * @return mixed
+     */
     public function getId(){
         return  $this->id;
     }
