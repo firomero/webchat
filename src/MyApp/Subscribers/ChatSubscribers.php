@@ -88,7 +88,8 @@ class ChatSubscribers implements EventSubscriberInterface{
     /**
      * @param Event $event
      */
-    public function onMessage(Event $event){
+    public function onMessage(Event $event)
+    {
         $dm = $event->getDm();
         $msgObject = $event->getMsgObject();
         $message = new Message();

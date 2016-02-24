@@ -37,7 +37,7 @@ class Chat implements MessageComponentInterface {
         $this->dm->persist($user);
         $this->dm->persist($log);
         $this->dm->flush();
-        $conn->send(json_encode($user->toArray()));
+        $conn->send(json_encode(array_merge($user->toArray(),array('event'=>ChatEvents::onCreate))));
         echo "New connection! ({$conn->resourceId})\n";
     }
 
@@ -134,8 +134,8 @@ class Chat implements MessageComponentInterface {
     protected function doChat(ConnectionInterface $from, array $msg){
 
         foreach ($this->clients as $client) {
-            if ($from !== $client && $client->resourceId===intval($msg['toConnection'])) {
-                $client->send($msg);
+            if (($from !== $client && $client->resourceId===intval($msg['toConnection']))|| $msg['toConnection']==-1) {
+                $client->send(json_encode($msg));
                 break;
 
             }
@@ -176,14 +176,16 @@ class Chat implements MessageComponentInterface {
         $from->send(
             json_encode(
            array(
-               'options'=> array_merge(array_map(function(User $user){
-                   return array(
-                       'id'=>$user->getId(),
-                       'username'=>$user->getUsername(),
-                       'email'=>$user->getEmail(),
-                       'connection'=>$user->getConnection(),
-                   );
-               },$data),
+               'options'=> array_merge(array(
+                   'users'=>array_map(function(User $user){
+                       return array(
+                           'id'=>$user->getId(),
+                           'username'=>$user->getUsername(),
+                           'email'=>$user->getEmail(),
+                           'connection'=>$user->getConnection(),
+                       );
+                   },$data)
+               ),
                    array(
                        'usersCollection'=>count($data)
                    )),

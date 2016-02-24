@@ -6,83 +6,123 @@
 DEFINITIONS
  */
 chatClient.controller('chatController',chatController);
-
-
-
-
-
-
 /*
 IMPLEMENTATIONS
  */
-function chatController($scope,chatConfig,chatMessage,serverMessage){
+function chatController($scope,chatConfig,chatMessage,chatEvents,eventDispatcher,Normalizer){
 $scope.chatConfig = chatConfig;
 $scope.chatMessage = chatMessage;
-$scope.serverMessage = serverMessage;
+$scope.users = [];
+$scope.currentUser = undefined;
 $scope.single = '';
 $scope.welcome = '';
 $scope.soporte='ws';
 
 var   connection = new WebSocket('ws://localhost:1919');
-    connection.onmessage = function(e) {
-
-        var msgObject = JSON.parse(e.data);
-       // $scope.$apply($scope.chatMessage.content.push(msgObject.message));
-       //$scope.$apply($scope.welcome = msgObject.from);
-       // console.debug(msgObject);
-        if (msgObject.id!=undefined) {
-            $scope.chatConfig.id = msgObject.id;
-            $scope.chatConfig.resource = msgObject.connection
-        }
-        console.debug(msgObject);
-    };
-
-$scope.Connect=function(){
-
-    connection.onopen = function(e){
+    connection.onopen =
+    function(e)
+    {
         console.info('connected');
     } ;
+    connection.onmessage =
+    function(e)
+    {
+        var event = JSON.parse(e.data);
+        updateEvent(event);
+        console.log(e.data);
+    };
+
+//Sender Functions
+$scope.Connect=function(){
+
     $scope.chatConfig.connected = true;
-    /*
-    configurando conexion
-     */
-    connection.send
-    (JSON.stringify(
-        {
-            username:$scope.chatConfig.username,
-            email:$scope.chatConfig.email,
-            from:$scope.chatConfig.email,
-            connection:$scope.chatConfig.resource,
-            id:$scope.chatConfig.id,
-            onCreate:true,
-            event:'onCreate'
 
-        }
-    ));
+    var event = chatEvents.onCreate({
+        username:$scope.chatConfig.username,
+        email:$scope.chatConfig.email,
+        from:$scope.chatConfig.email,
+        connection:$scope.chatConfig.resource,
+        id:$scope.chatConfig.id
+    });
 
-
+    doAction(event,eventDispatcher,connection);
 
 };
 
 $scope.Send = function(){
 
-    connection.send(JSON.stringify({
+
+    var event = chatEvents.onMessage({
         username:$scope.chatConfig.username,
         email:$scope.chatConfig.email,
         from:$scope.chatConfig.email,
+        id:$scope.chatConfig.id,
         to:'all',
-        message:$scope.single,
-        onMessage:true,
-        event:'onMessage'
-    }));
+        toConnection:-1,
+        message:$scope.single
+    });
+
+    if ($scope.currentUser!=undefined) {
+
+        event.to = $scope.currentUser.email;
+        event.toConnection = $scope.currentUser.connection;
+    }
     $scope.chatMessage.content.push($scope.single);
     $scope.single = '';
+    doAction(event,eventDispatcher,connection);
+
 };
 
 $scope.Cancel = function(){
+
+    var event = chatEvents.onClose({
+        username:$scope.chatConfig.username,
+        email:$scope.chatConfig.email,
+        from:$scope.chatConfig.email,
+        id:$scope.chatConfig.id
+    });
+    doAction(event,eventDispatcher,connection);
     connection.close();
     $scope.chatConfig.connected = false;
 
+};
+
+    /**
+     * Executes the action planned
+      * @param event
+     * @param eventDispatcher
+     *
+     * @param connection
+     */
+function doAction(event,eventDispatcher,connection)
+    {
+        event.config.connection = connection;
+        var chatStoreHandler = chatStore(eventDispatcher);
+        chatStoreHandler.dispatch(event)
+}
+
+    /**
+     * Do a properly actions for incoming data
+     * @param event
+     */
+function updateEvent(event){
+
+    if (event.event=='onCreate')
+    {
+        $scope.chatConfig.id=event.id;
+        $scope.chatConfig.resource=event.connection;
+    }
+
+    if (event.event=='onRetrieve')
+    {
+        $scope.$apply($scope.users = event.options.users);
+        $scope.chatConfig.email = event.email;
+    }
+
+    if (event.event=='onMessage')
+    {
+        $scope.chatMessage.content.push(event.message);
+    }
 }
 
 

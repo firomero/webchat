@@ -212,33 +212,10 @@ License: You must have a valid license purchased only from themeforest(the above
 
                 <div class="col-md-3 col-sm-3">
                     <h2>Our Contacts</h2>
-                    <address>
-                        <strong>Loop, Inc.</strong><br>
-                        795 Park Ave, Suite 120<br>
-                        San Francisco, CA 94107<br>
-                        <abbr title="Phone">P:</abbr> (234) 145-1810
-                    </address>
-                    <address>
-                        <strong>Email</strong><br>
-                        <a href="mailto:#">info@email.com</a><br>
-                        <a href="mailto:#">support@example.com</a>
-                    </address>
-                    <ul class="social-icons margin-bottom-10">
-                        <li><a href="#" data-original-title="facebook" class="facebook"></a></li>
-                        <li><a href="#" data-original-title="github" class="github"></a></li>
-                        <li><a href="#" data-original-title="Goole Plus" class="googleplus"></a></li>
-                        <li><a href="#" data-original-title="linkedin" class="linkedin"></a></li>
-                        <li><a href="#" data-original-title="rss" class="rss"></a></li>
-                    </ul>
-
-                    <div class="clearfix margin-bottom-30"></div>
-
-                    <h2>About Us</h2>
-                    <p>Sediam nonummy nibh euismod tation ullamcorper suscipit</p>
-                    <ul class="list-unstyled">
-                        <li><i class="fa fa-check"></i> Officia deserunt molliti</li>
-                        <li><i class="fa fa-check"></i> Consectetur adipiscing </li>
-                        <li><i class="fa fa-check"></i> Deserunt fpicia</li>
+                    <ul>
+                        <li data-ng-repeat="user in users">
+                            <i class="fa fa-envelope" data-ng-click="currentUser=user"></i>{{user.email}}
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -393,6 +370,7 @@ License: You must have a valid license purchased only from themeforest(the above
     <script type="text/javascript" src="js/client/chatClient.js"> </script>
     <script type="text/javascript" src="js/client/controller/controller.js"> </script>
     <script type="text/javascript" src="js/client/factory/factory.js"> </script>
+    <script type="text/javascript" src="js/client/service/service.js"> </script>
     <script type="text/javascript">
         jQuery(document).ready(function() {    
            App.init();
