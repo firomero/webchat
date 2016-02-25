@@ -7,6 +7,7 @@ use MyApp\Model\Event;
 use MyApp\Persistence\Log;
 use MyApp\Persistence\User;
 use MyApp\Subscribers\ChatSubscribers;
+use MyApp\Subscribers\GlobalSubscribers;
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -21,6 +22,7 @@ class Chat implements MessageComponentInterface {
         $this->dm = $dm;
         $this->eventDispatcher = new EventDispatcher();
         $this->eventDispatcher->addSubscriber(new ChatSubscribers());
+        $this->eventDispatcher->addSubscriber(new GlobalSubscribers());
     }
 
     /**
@@ -37,7 +39,7 @@ class Chat implements MessageComponentInterface {
         $this->dm->persist($user);
         $this->dm->persist($log);
         $this->dm->flush();
-        $conn->send(json_encode(array_merge($user->toArray(),array('event'=>ChatEvents::onCreate))));
+        $conn->send(json_encode(array_merge($user->toArray(),array('event'=>ChatEvents::onCreate,'callback_id'=>-1))));
         echo "New connection! ({$conn->resourceId})\n";
     }
 
@@ -93,7 +95,7 @@ class Chat implements MessageComponentInterface {
         }
         else
         {
-            throw new EventNotAllowedException();
+//            throw new EventNotAllowedException();
 
         }
 
@@ -111,9 +113,9 @@ class Chat implements MessageComponentInterface {
      * @param \Exception $e
      */
     public function onError(ConnectionInterface $conn, \Exception $e) {
-    	echo "An error has occurred: {$e->getMessage()}\n";
+    	echo "An error has occurred: {$e->getMessage()} in {$e->getFile()} \n on line {$e->getLine()} \n with trace {$e->getTraceAsString()}";
         $log = new Log();
-        $log->setLogMesssage("An error has occurred: {$e->getMessage()}\n");
+        $log->setLogMesssage("An error has occurred: {$e->getMessage()} in {$e->getFile()} \n on line {$e->getLine()} \n with trace {$e->getTraceAsString()}");
         $log->setLogTime(date_format(new \DateTime(),'d-m-Y H:i:s'));
         $this->dm->persist($log);
         $this->dm->flush();
@@ -148,55 +150,7 @@ class Chat implements MessageComponentInterface {
      */
     protected function retrieveServerInfo(ConnectionInterface $from){
 
-        $connections = array();
-        foreach ($this->clients as $client) {
-            if ($client!==$from) {
-                $connections[]=$client->resourceId;
-            }
-        }
-
-        /*
-         * listing online users
-         */
-        $data = array_filter($this->dm->getRepository('MyApp\\Persistence\\User')->findAll(),function(User $user)use($connections){
-            return in_array($user->getConnection(),$connections);
-        });
-
-        /**
-         * @var User $user
-         */
-        $user = current(
-            array_filter($this->dm->getRepository('MyApp\\Persistence\\User')->findAll(),function(User $user)use($from){
-                return $user->getConnection()==$from->resourceId;
-            })
-        );
-
-
-
-        $from->send(
-            json_encode(
-           array(
-               'options'=> array_merge(array(
-                   'users'=>array_map(function(User $user){
-                       return array(
-                           'id'=>$user->getId(),
-                           'username'=>$user->getUsername(),
-                           'email'=>$user->getEmail(),
-                           'connection'=>$user->getConnection(),
-                       );
-                   },$data)
-               ),
-                   array(
-                       'usersCollection'=>count($data)
-                   )),
-               'event'=>ChatEvents::onRetrieve,
-               'from'=>$from->resourceId,
-               'email'=>$user->getEmail(),
-               'id'=>$user->getId()
-
-           )
-        )
-        );
+        $this->eventDispatcher->dispatch(ChatEvents::onBroadCast,new Event($this->clients,null,$this->dm));
 
     }
 

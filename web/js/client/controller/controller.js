@@ -9,28 +9,75 @@ chatClient.controller('chatController',chatController);
 /*
 IMPLEMENTATIONS
  */
-function chatController($scope,chatConfig,chatMessage,chatEvents,eventDispatcher,Normalizer){
+function chatController($scope,chatConfig,chatMessage,chatEvents,eventDispatcher,Normalizer,$q){
+/*
+Global variables
+ */
 $scope.chatConfig = chatConfig;
 $scope.chatMessage = chatMessage;
 $scope.users = [];
+$scope.localClient = {};
 $scope.currentUser = undefined;
 $scope.single = '';
 $scope.welcome = '';
 $scope.soporte='ws';
 
-var   connection = new WebSocket('ws://localhost:1919');
+/*
+    Local vaiables
+     */
+
+    // Keep all pending requests here until they get responses
+    var callbacks = {};
+    // Create a unique callback ID to map requests to responses
+    var currentCallbackId = 0;
+    var receivers = {};
+
+//BODY
+
+try{
+
+
+    var   connection = new WebSocket('ws://localhost:1919');
     connection.onopen =
-    function(e)
-    {
-        console.info('connected');
-    } ;
+        function(e)
+        {
+            console.info('connected');
+        } ;
     connection.onmessage =
-    function(e)
+        function(e)
+        {
+            var event = JSON.parse(e.data);
+
+            // If an object exists with callback_id in our callbacks object, resolve it
+            if(!receivers.hasOwnProperty(event.callback_id)||event.callback_id==-1)
+            {
+                //console.log(callbacks[event.callback_id]);
+                //$scope.$apply(callbacks[event.callback_id].cb.resolve(event));
+                updateEvent(event);
+                receivers[event.callback_id]=event;
+                console.log(event);
+            }
+            else
+            {
+                delete receivers[event.callback_id];
+            }
+
+
+
+
+        };
+
+}
+    catch (err)
     {
-        var event = JSON.parse(e.data);
-        updateEvent(event);
-        console.log(e.data);
-    };
+        console.warn(err);
+    }
+
+//Object functions
+$scope.updateUser=function(user){
+        $scope.currentUser = user;
+    console.debug(user);
+    }    ;
 
 //Sender Functions
 $scope.Connect=function(){
@@ -64,8 +111,8 @@ $scope.Send = function(){
 
     if ($scope.currentUser!=undefined) {
 
-        event.to = $scope.currentUser.email;
-        event.toConnection = $scope.currentUser.connection;
+        event.item.to = $scope.currentUser.email;
+        event.item.toConnection = $scope.currentUser.connection;
     }
     $scope.chatMessage.content.push($scope.single);
     $scope.single = '';
@@ -96,9 +143,18 @@ $scope.Cancel = function(){
      */
 function doAction(event,eventDispatcher,connection)
     {
+        var defer = $q.defer();
+        var callbackId = getCallbackId();
+        callbacks[callbackId] = {
+            time: new Date(),
+            cb:defer
+        };
+        event.item.callback_id = callbackId;
+        event.callback_id = callbackId;
         event.config.connection = connection;
         var chatStoreHandler = chatStore(eventDispatcher);
-        chatStoreHandler.dispatch(event)
+        chatStoreHandler.dispatch(event);
+        return defer.promise;
 }
 
     /**
@@ -110,20 +166,42 @@ function updateEvent(event){
     if (event.event=='onCreate')
     {
         $scope.chatConfig.id=event.id;
-        $scope.chatConfig.resource=event.connection;
+        $scope.chatConfig.resource=event.connection
+
     }
 
     if (event.event=='onRetrieve')
     {
         $scope.$apply($scope.users = event.options.users);
-        $scope.chatConfig.email = event.email;
+        $scope.$apply( $scope.chatConfig.email = event.email);
+
+
     }
 
     if (event.event=='onMessage')
     {
-        $scope.chatMessage.content.push(event.message);
+
+        $scope.$apply( $scope.chatMessage.content.push(event.message));
+        $scope.$apply( $scope.welcome = event.email);
+
+
+    }
+
+    if (event.event=='onBroadCast')
+    {
+
+        $scope.$apply($scope.users = event.options.users);
+
     }
 }
+
+    function getCallbackId(){
+        currentCallbackId += 1;
+        if(currentCallbackId > 10000) {
+            currentCallbackId = 0;
+        }
+        return currentCallbackId;
+    }
 
 
 }

@@ -40,4 +40,10 @@ class ChatEvents {
      */
 
     const onRetrieve = 'onRetrieve';
+
+
+    /*
+     * on BroadCast
+     */
+    const onBroadCast = 'onBroadCast';
 }
