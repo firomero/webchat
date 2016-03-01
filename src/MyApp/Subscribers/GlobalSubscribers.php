@@ -70,6 +70,9 @@ class GlobalSubscribers implements EventSubscriberInterface{
         });
 
         foreach ($clients as $client) {
+            if (!is_object($client)) {
+                continue;
+            }
             /**
              * @var ConnectionInterface $client
              */

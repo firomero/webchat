@@ -36,13 +36,19 @@ $scope.soporte='ws';
 
 try{
 
+    //var connection = $websocket('ws://localhost:1919');
 
     var   connection = new WebSocket('ws://localhost:1919');
-    connection.onopen =
-        function(e)
-        {
-            console.info('connected');
-        } ;
+
+    connection.onopen=function() {
+        console.log('connection open');
+
+    };
+
+    //connection  .onError(function(event) {
+    //    console.log('connection Error', event);
+    //});
+
     connection.onmessage =
         function(e)
         {
@@ -57,15 +63,13 @@ try{
                 receivers[event.callback_id]=event;
                 console.log(event);
             }
-            else
-            {
-                delete receivers[event.callback_id];
-            }
 
 
 
 
-        };
+
+        }
+    ;
 
 }
     catch (err)
@@ -126,9 +130,11 @@ $scope.Cancel = function(){
         username:$scope.chatConfig.username,
         email:$scope.chatConfig.email,
         from:$scope.chatConfig.email,
-        id:$scope.chatConfig.id
+        id:$scope.chatConfig.id,
+        message:'Closing connection'
     });
     doAction(event,eventDispatcher,connection);
+
     connection.close();
     $scope.chatConfig.connected = false;
 

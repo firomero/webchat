@@ -67,6 +67,7 @@ function chatEvents(){
             }
         },
         onClose:function(item){
+            item.event = 'onClose';
             return {
                 event:'onClose',
                 item:item,
